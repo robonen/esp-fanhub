@@ -51,14 +51,19 @@ const char* WebAPI::getContentType(const char* path) {
 bool WebAPI::serveFile(AsyncWebServerRequest* req, const String& path) {
   String p = path.endsWith("/") ? path + "index.html" : path;
   
-  if (!LittleFS.exists(p)) {
+  // Add .gz extension for gzipped files
+  String gzPath = p + ".gz";
+  
+  if (!LittleFS.exists(gzPath)) {
     if (p.startsWith("/api")) return false;
+    gzPath = "/index.html.gz";
+    if (!LittleFS.exists(gzPath)) return false;
     p = "/index.html";
-    if (!LittleFS.exists(p)) return false;
   }
   
-  auto* response = req->beginResponse(LittleFS, p, getContentType(p.c_str()));
+  auto* response = req->beginResponse(LittleFS, gzPath, getContentType(p.c_str()));
   response->addHeader("Cache-Control", "max-age=86400");
+  response->addHeader("Content-Encoding", "gzip");
   req->send(response);
   return true;
 }
