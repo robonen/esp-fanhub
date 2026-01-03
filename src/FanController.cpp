@@ -10,7 +10,7 @@ void FanController::begin() {
     setDuty(i, MIN_DUTY_PCT);
   }
   initDefaultCurves();
-  loadCurves();
+  loadState();
 }
 
 void FanController::update() {
@@ -22,11 +22,17 @@ void FanController::update() {
 }
 
 void FanController::setManualDuty(uint8_t idx, float duty) {
-  if (idx < FAN_COUNT) fans[idx].manualDuty = duty;
+  if (idx < FAN_COUNT) {
+    fans[idx].manualDuty = duty;
+    saveState();
+  }
 }
 
 void FanController::setManualMode(uint8_t idx, bool manual) {
-  if (idx < FAN_COUNT) fans[idx].manual = manual;
+  if (idx < FAN_COUNT) {
+    fans[idx].manual = manual;
+    saveState();
+  }
 }
 
 void FanController::setCurvePoints(uint8_t idx, const CurvePoint* points, uint8_t count) {
@@ -36,7 +42,7 @@ void FanController::setCurvePoints(uint8_t idx, const CurvePoint* points, uint8_
   }
   fans[idx].curveCount = count;
   sortCurve(idx);
-  saveCurves();
+  saveState();
 }
 
 void FanController::initDefaultCurves() {
@@ -47,49 +53,67 @@ void FanController::initDefaultCurves() {
   }
 }
 
-bool FanController::saveCurves() {
-  File f = LittleFS.open("/curves.txt", "w");
+bool FanController::saveState() {
+  File f = LittleFS.open("/fans.txt", "w");
   if (!f) return false;
+  
   for (uint8_t i = 0; i < FAN_COUNT; ++i) {
+    // Line format: mode|manualDuty|temp:duty,temp:duty,...
+    f.print(fans[i].manual ? '1' : '0');
+    f.print('|');
+    f.print(fans[i].manualDuty, 1);
+    f.print('|');
     for (uint8_t j = 0; j < fans[i].curveCount; ++j) {
       if (j) f.print(',');
       f.print(fans[i].curve[j].tempC, 1);
       f.print(':');
       f.print(fans[i].curve[j].dutyPct, 1);
     }
-    if (i + 1 < FAN_COUNT) f.print('\n');
+    f.print('\n');
   }
   f.close();
   return true;
 }
 
-bool FanController::loadCurves() {
-  File f = LittleFS.open("/curves.txt", "r");
+bool FanController::loadState() {
+  File f = LittleFS.open("/fans.txt", "r");
   if (!f) return false;
 
-  uint8_t fanIdx = 0;
-  while (f && fanIdx < FAN_COUNT) {
+  uint8_t idx = 0;
+  while (f.available() && idx < FAN_COUNT) {
     String line = f.readStringUntil('\n');
     line.trim();
-    if (line.length() == 0) { fanIdx++; continue; }
+    if (line.length() == 0) { idx++; continue; }
 
-    CurvePoint pts[MAX_CURVE_POINTS];
+    // Parse: mode|manualDuty|curves
+    int sep1 = line.indexOf('|');
+    int sep2 = line.indexOf('|', sep1 + 1);
+    if (sep1 < 0 || sep2 < 0) { idx++; continue; }
+
+    fans[idx].manual = (line[0] == '1');
+    fans[idx].manualDuty = line.substring(sep1 + 1, sep2).toFloat();
+
+    // Parse curves
+    String curvesStr = line.substring(sep2 + 1);
     uint8_t cnt = 0;
     int start = 0;
-    while (start < line.length() && cnt < MAX_CURVE_POINTS) {
-      int comma = line.indexOf(',', start);
-      String token = (comma == -1) ? line.substring(start) : line.substring(start, comma);
+    while (start < (int)curvesStr.length() && cnt < MAX_CURVE_POINTS) {
+      int comma = curvesStr.indexOf(',', start);
+      String token = (comma < 0) ? curvesStr.substring(start) : curvesStr.substring(start, comma);
       int colon = token.indexOf(':');
       if (colon > 0) {
-        float t = token.substring(0, colon).toFloat();
-        float d = token.substring(colon + 1).toFloat();
-        pts[cnt++] = {t, d};
+        fans[idx].curve[cnt].tempC = token.substring(0, colon).toFloat();
+        fans[idx].curve[cnt].dutyPct = token.substring(colon + 1).toFloat();
+        cnt++;
       }
-      if (comma == -1) break;
+      if (comma < 0) break;
       start = comma + 1;
     }
-    if (cnt > 0) setCurvePoints(fanIdx, pts, cnt);
-    fanIdx++;
+    if (cnt > 0) {
+      fans[idx].curveCount = cnt;
+      sortCurve(idx);
+    }
+    idx++;
   }
   f.close();
   return true;

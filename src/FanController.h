@@ -28,8 +28,8 @@ public:
   void setManualDuty(uint8_t idx, float duty);
   void setManualMode(uint8_t idx, bool manual);
   void setCurvePoints(uint8_t idx, const CurvePoint* points, uint8_t count);
-  bool saveCurves();
-  bool loadCurves();
+  bool saveState();
+  bool loadState();
   
 private:
   FanState fans[FAN_COUNT];

@@ -76,9 +76,10 @@ void WebAPI::handleStatus(AsyncWebServerRequest* req) {
   static char buf[384];
   float temp = fanCtrl.getTemp();
   const char* ip = WiFi.localIP().toString().c_str();
+  int rssi = WiFi.RSSI();
   
   int len = snprintf(buf, sizeof(buf),
-    "{\"wifi\":true,\"ip\":\"%s\",\"tempC\":%.2f,\"fans\":[", ip, temp);
+    "{\"wifi\":true,\"ip\":\"%s\",\"rssi\":%d,\"tempC\":%.2f,\"fans\":[", ip, rssi, temp);
   
   for (uint8_t i = 0; i < FAN_COUNT; ++i) {
     const auto& f = fanCtrl.getFan(i);

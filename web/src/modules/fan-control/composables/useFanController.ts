@@ -41,6 +41,7 @@ export const useFanController = createGlobalState(() => {
 
   const wifi = computed(() => statusData.value?.wifi ?? false);
   const ip = computed(() => statusData.value?.ip ?? '');
+  const rssi = computed(() => statusData.value?.rssi ?? 0);
   const tempC = computed(() => statusData.value?.tempC ?? 0);
   const fans = computed(() => statusData.value?.fans ?? DEFAULT_FANS);
 
@@ -128,6 +129,7 @@ export const useFanController = createGlobalState(() => {
   return {
     wifi,
     ip,
+    rssi,
     tempC,
     fans,
     activeFan,

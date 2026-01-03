@@ -8,6 +8,7 @@ export interface FanStatus {
 export interface Status {
   wifi: boolean;
   ip: string;
+  rssi: number;
   tempC: number;
   fans: FanStatus[];
 }

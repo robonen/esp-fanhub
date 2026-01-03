@@ -8,12 +8,13 @@
           <ThemeToggle />
         </div>
         <div class="flex items-center gap-4">
-          <p class="text-sm">
+          <p class="text-sm flex items-center gap-2">
             <span class="text-text-secondary">Wi-Fi:</span>
             <span :class="wifi ? 'text-accent-success' : 'text-accent-danger'" class="ml-1">
               {{ wifi ? 'Подключено' : 'Подключение...' }}
             </span>
             <span v-if="wifi && ip" class="text-text-muted ml-1">({{ ip }})</span>
+            <WifiSignal v-if="wifi" :wifi="wifi" :rssi="rssi" />
           </p>
           <p class="text-sm">
             <span class="text-text-secondary">Температура CPU:</span>
@@ -62,10 +63,12 @@
 <script setup lang="ts">
 import { FanCard, useFanController } from '../../modules/fan-control';
 import ThemeToggle from '../../modules/ui/components/ThemeToggle.vue';
+import WifiSignal from '../../modules/ui/components/WifiSignal.vue';
 
 const {
   wifi,
   ip,
+  rssi,
   tempC,
   fans,
   activeFan,
