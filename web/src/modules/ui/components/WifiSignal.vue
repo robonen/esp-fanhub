@@ -1,13 +1,11 @@
 <template>
-  <div class="inline-flex items-center gap-1 text-sm">
-    <component
-      :is="icon"
-      class="size-4"
-      :class="iconClass"
-      aria-hidden="true"
-    />
-    <span class="font-mono text-xs text-text-secondary">{{ display }}</span>
-  </div>
+  <component
+    :is="icon"
+    class="size-4"
+    :class="iconClass"
+    :title="display"
+    aria-hidden="true"
+  />
 </template>
 
 <script setup lang="ts">
