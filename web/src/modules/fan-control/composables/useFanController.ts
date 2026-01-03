@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, toRaw } from 'vue';
 import { createGlobalState, useIntervalFn } from '@vueuse/core';
 import { useStatusApi, useCurvePointsApi, apiPatch } from '../../../common/api';
 import type { FanStatus, CurvePoint } from '../../../common/types';
@@ -14,6 +14,10 @@ const DEFAULT_POINTS: CurvePoint[][] = [
   [{ temp: 35, duty: 35 }, { temp: 75, duty: 100 }],
   [{ temp: 35, duty: 35 }, { temp: 75, duty: 100 }],
 ];
+
+function clonePoints(points: CurvePoint[]): CurvePoint[] {
+  return toRaw(points).map((p) => ({ temp: p.temp, duty: p.duty }));
+}
 
 function pointsEqual(a: CurvePoint[], b: CurvePoint[]): boolean {
   if (a.length !== b.length) return false;
@@ -85,7 +89,7 @@ export const useFanController = createGlobalState(() => {
       .join(',');
     isEditing.value = false;
     await apiPatch('/api/curvePoints', { id: fanIndex, points: csv });
-    savedPoints.value[fanIndex] = structuredClone(fanPoints);
+    savedPoints.value[fanIndex] = clonePoints(fanPoints);
     await refreshStatus();
   }
 
@@ -114,8 +118,8 @@ export const useFanController = createGlobalState(() => {
     const currentPoints = points.value[activeFan.value];
     if (!currentPoints) return;
     
-    const cloned = structuredClone(currentPoints);
-    points.value = points.value.map(() => structuredClone(cloned)) as CurvePoint[][];
+    const cloned = clonePoints(currentPoints);
+    points.value = points.value.map(() => clonePoints(cloned)) as CurvePoint[][];
   }
 
   refreshPoints();

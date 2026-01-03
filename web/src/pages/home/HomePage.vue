@@ -16,7 +16,7 @@
             <span v-if="wifi && ip" class="text-text-muted ml-1">({{ ip }})</span>
           </p>
           <p class="text-sm">
-            <span class="text-text-secondary">Температура:</span>
+            <span class="text-text-secondary">Температура CPU:</span>
             <span class="font-mono text-accent-warning ml-1">{{ tempC.toFixed(1) }}°C</span>
           </p>
         </div>
