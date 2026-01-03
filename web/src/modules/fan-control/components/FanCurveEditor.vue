@@ -1,97 +1,67 @@
 <template>
-  <div class="space-y-2">
-    <div class="text-xs text-text-secondary mb-2">Кривая (Темп → Скорость)</div>
+  <div class="space-y-3">
+    <div class="text-xs text-text-secondary">Кривая: кликните на график для добавления точки</div>
 
     <!-- Graph -->
-    <FanCurveGraph :data="graphData" />
+    <FanCurveGraph :data="graphData" @click="onGraphClick" />
 
-    <!-- Points Editor -->
-    <div class="space-y-1 max-h-32 overflow-y-auto">
-      <div v-for="(pt, j) in points" :key="j" class="flex items-center gap-1">
-        <input
-          type="number"
-          class="w-14 px-2 py-1 rounded-md bg-surface-overlay text-xs text-center focus:outline focus:outline-border-default"
-          :value="pt.temp"
-          @input="onTempChange(j, $event)"
-          @focus="$emit('edit-start')"
-          @blur="$emit('edit-end')"
-        />
-        <span class="text-xs text-text-muted">°→</span>
-        <input
-          type="number"
-          class="w-14 px-2 py-1 rounded-md bg-surface-overlay text-xs text-center focus:outline focus:outline-border-default"
-          :value="pt.duty"
-          @input="onDutyChange(j, $event)"
-          @focus="$emit('edit-start')"
-          @blur="$emit('edit-end')"
-        />
-        <span class="text-xs text-text-muted">%</span>
+    <!-- Points as tags -->
+    <div class="flex flex-wrap gap-1.5">
+      <div 
+        v-for="(pt, j) in sortedPoints" 
+        :key="j" 
+        class="inline-flex items-center gap-1 px-2 py-1 bg-surface-overlay rounded text-xs"
+      >
+        <span class="text-text-primary font-mono">{{ pt.temp }}°→{{ pt.duty }}%</span>
         <button
-          class="px-2 py-1 rounded-md bg-interactive-default text-xs text-text-secondary transition hover:bg-accent-danger/30 hover:text-accent-danger"
-          @click="$emit('remove', j)"
+          class="text-text-muted hover:text-accent-danger transition"
+          @click="removePoint(fanIndex, pt.originalIndex)"
         >
-          ✕
+          <X class="size-3" aria-hidden="true" />
         </button>
       </div>
+      <span v-if="fanPoints.length === 0" class="text-xs text-text-muted italic py-1">
+        Нет точек
+      </span>
     </div>
 
-    <!-- Actions -->
-    <div class="flex gap-2 pt-2">
-      <button
-        class="flex-1 px-2 py-1 rounded-md bg-interactive-default text-xs transition hover:bg-interactive-hover"
-        @click="$emit('add')"
-      >
-        + Точка
-      </button>
-      <button
-        class="flex-1 px-2 py-1 rounded-md bg-accent-success text-surface-base text-xs transition hover:brightness-110"
-        @click="$emit('save')"
-      >
-        Сохранить
-      </button>
-    </div>
+    <!-- Save button -->
+    <button
+      v-if="hasChanges"
+      class="w-full px-3 py-2 rounded-md bg-accent-success text-surface-base text-sm transition hover:brightness-110 font-medium"
+      @click="savePoints(fanIndex)"
+    >
+      Сохранить кривую
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CurvePoint } from '../../../common/types';
+import { computed } from 'vue';
+import { X } from 'lucide-vue-next';
+import { useFanController } from '../composables/useFanController';
+import { useFanGraph } from '../composables/useFanGraph';
 import FanCurveGraph from './FanCurveGraph.vue';
 
-interface GraphData {
-  minT: number;
-  maxT: number;
-  minD: number;
-  maxD: number;
-  polyline: string;
-  currentX: number;
-  currentY: number;
-}
-
-const emit = defineEmits<{
-  'update:points': [points: CurvePoint[]];
-  add: [];
-  remove: [index: number];
-  save: [];
-  'edit-start': [];
-  'edit-end': [];
-}>();
-
 const props = defineProps<{
-  points: CurvePoint[];
-  graphData: GraphData;
+  fanIndex: number;
 }>();
 
-function onTempChange(index: number, event: Event) {
-  const target = event.target as HTMLInputElement;
-  emit('update:points', updatePoint(index, { temp: Number(target.value) }));
-}
+const { points, hasUnsavedChanges, addPoint, removePoint, savePoints, updatePoints } = useFanController();
 
-function onDutyChange(index: number, event: Event) {
-  const target = event.target as HTMLInputElement;
-  emit('update:points', updatePoint(index, { duty: Number(target.value) }));
-}
+const fanPoints = computed(() => points.value[props.fanIndex]);
+const hasChanges = computed(() => hasUnsavedChanges.value[props.fanIndex]);
 
-function updatePoint(index: number, update: Partial<CurvePoint>): CurvePoint[] {
-  return props.points.map((p, i) => (i === index ? { ...p, ...update } : p));
+const graphData = useFanGraph(props.fanIndex);
+
+const sortedPoints = computed(() => {
+  return fanPoints.value
+    .map((pt, i) => ({ ...pt, originalIndex: i }))
+    .sort((a, b) => a.temp - b.temp);
+});
+
+function onGraphClick(temp: number, duty: number) {
+  const newPoints = [...fanPoints.value, { temp, duty }].sort((a, b) => a.temp - b.temp);
+  updatePoints(props.fanIndex, newPoints);
 }
 </script>

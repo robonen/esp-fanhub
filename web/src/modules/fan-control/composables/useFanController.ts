@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue';
-import { useIntervalFn } from '@vueuse/core';
+import { createGlobalState, useIntervalFn } from '@vueuse/core';
 import { useStatusApi, useCurvePointsApi, apiPatch } from '../../../common/api';
 import type { FanStatus, CurvePoint } from '../../../common/types';
 
@@ -15,18 +15,31 @@ const DEFAULT_POINTS: CurvePoint[][] = [
   [{ temp: 35, duty: 35 }, { temp: 75, duty: 100 }],
 ];
 
-export function useFanController() {
+function pointsEqual(a: CurvePoint[], b: CurvePoint[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort((x, y) => x.temp - y.temp);
+  const sortedB = [...b].sort((x, y) => x.temp - y.temp);
+  return sortedA.every((p, i) => p.temp === sortedB[i].temp && p.duty === sortedB[i].duty);
+}
+
+export const useFanController = createGlobalState(() => {
   const { data: statusData, execute: refreshStatus } = useStatusApi();
   const { data: pointsData, execute: refreshPoints } = useCurvePointsApi();
 
+  const activeFan = ref(0);
   const manualDuty = ref([50, 50, 50]);
   const points = ref<CurvePoint[][]>(structuredClone(DEFAULT_POINTS));
+  const savedPoints = ref<CurvePoint[][]>(structuredClone(DEFAULT_POINTS));
   const isEditing = ref(false);
 
   const wifi = computed(() => statusData.value?.wifi ?? false);
   const ip = computed(() => statusData.value?.ip ?? '');
   const tempC = computed(() => statusData.value?.tempC ?? 0);
   const fans = computed(() => statusData.value?.fans ?? DEFAULT_FANS);
+
+  const hasUnsavedChanges = computed(() => {
+    return points.value.map((pts, i) => !pointsEqual(pts, savedPoints.value[i]));
+  });
 
   watch(statusData, (data) => {
     if (data?.fans) {
@@ -38,9 +51,11 @@ export function useFanController() {
 
   watch(pointsData, (data) => {
     if (data && !isEditing.value) {
-      points.value = data.map((fan) =>
+      const parsed = data.map((fan) =>
         fan.map((p) => ({ temp: p.t, duty: p.d }))
       );
+      points.value = structuredClone(parsed);
+      savedPoints.value = structuredClone(parsed);
     }
   });
 
@@ -61,13 +76,14 @@ export function useFanController() {
       .join(',');
     isEditing.value = false;
     await apiPatch('/api/curvePoints', { id: fanIndex, points: csv });
+    savedPoints.value[fanIndex] = structuredClone(points.value[fanIndex]);
     await refreshStatus();
   }
 
-  function addPoint(fanIndex: number): void {
+  function addPoint(fanIndex: number, temp?: number, duty?: number): void {
     points.value[fanIndex].push({
-      temp: Math.round(tempC.value),
-      duty: Math.round(fans.value[fanIndex]?.dutyPct ?? 60),
+      temp: temp ?? Math.round(tempC.value),
+      duty: duty ?? Math.round(fans.value[fanIndex]?.dutyPct ?? 60),
     });
   }
 
@@ -75,6 +91,10 @@ export function useFanController() {
     if (points.value[fanIndex].length > 1) {
       points.value[fanIndex].splice(pointIndex, 1);
     }
+  }
+
+  function updatePoints(fanIndex: number, newPoints: CurvePoint[]): void {
+    points.value[fanIndex] = newPoints;
   }
 
   refreshPoints();
@@ -85,13 +105,16 @@ export function useFanController() {
     ip,
     tempC,
     fans,
+    activeFan,
     manualDuty,
     points,
     isEditing,
+    hasUnsavedChanges,
     setMode,
     setManualDuty,
     savePoints,
     addPoint,
     removePoint,
+    updatePoints,
   };
-}
+});

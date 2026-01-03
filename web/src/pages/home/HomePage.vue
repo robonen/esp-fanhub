@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen p-4">
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-xl mx-auto">
       <!-- Header -->
       <div class="p-4 rounded-xl border border-border-muted bg-surface-elevated/60 mb-4 space-y-2">
         <div class="flex items-center justify-between gap-3">
@@ -22,34 +22,45 @@
         </div>
       </div>
 
-      <!-- Fans -->
-      <div class="grid md:grid-cols-3 gap-4">
-        <FanCard
+      <!-- Fan Tabs -->
+      <div class="flex gap-1 mb-4">
+        <button
           v-for="(fan, i) in fans"
           :key="i"
-          :fan-index="i"
-          :duty-pct="fan.dutyPct"
-          :manual="fan.manual"
-          :manual-duty="manualDuty[i]"
-          :points="points[i]"
-          :graph-data="graphData[i]"
-          @mode-change="setMode(i, $event)"
-          @duty-change="manualDuty[i] = $event"
-          @duty-save="setManualDuty(i, manualDuty[i])"
-          @points-change="points[i] = $event"
-          @point-add="addPoint(i)"
-          @point-remove="removePoint(i, $event)"
-          @points-save="savePoints(i)"
-          @edit-start="isEditing = true"
-          @edit-end="isEditing = false"
-        />
+          :class="[
+            'flex-1 px-3 py-2 rounded-lg text-sm font-medium transition',
+            activeFan === i 
+              ? 'bg-surface-elevated border border-border-default text-text-primary' 
+              : 'bg-surface-overlay/50 text-text-secondary hover:bg-surface-overlay'
+          ]"
+          @click="activeFan = i"
+        >
+          <div class="flex items-center justify-center gap-2">
+            <span>Вент {{ i + 1 }}</span>
+            <span 
+              :class="[
+                'text-xs px-1.5 py-0.5 rounded',
+                fan.manual ? 'bg-accent-warning/20 text-accent-warning' : 'bg-accent-success/20 text-accent-success'
+              ]"
+            >
+              {{ fan.dutyPct.toFixed(0) }}%
+            </span>
+            <span 
+              v-if="hasUnsavedChanges[i] && !fan.manual" 
+              class="size-2 rounded-full bg-accent-info"
+            />
+          </div>
+        </button>
       </div>
+
+      <!-- Active Fan Card -->
+      <FanCard :fan-index="activeFan" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { FanCard, useFanController, useFanGraph } from '../../modules/fan-control';
+import { FanCard, useFanController } from '../../modules/fan-control';
 import ThemeToggle from '../../modules/ui/components/ThemeToggle.vue';
 
 const {
@@ -57,15 +68,7 @@ const {
   ip,
   tempC,
   fans,
-  manualDuty,
-  points,
-  isEditing,
-  setMode,
-  setManualDuty,
-  savePoints,
-  addPoint,
-  removePoint,
+  activeFan,
+  hasUnsavedChanges,
 } = useFanController();
-
-const graphData = useFanGraph(points, fans, tempC);
 </script>

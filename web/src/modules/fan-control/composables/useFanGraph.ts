@@ -1,5 +1,6 @@
-import { computed, type ComputedRef, type Ref } from 'vue';
-import type { CurvePoint, FanStatus } from '../../../common/types';
+import { computed, type ComputedRef } from 'vue';
+import type { CurvePoint } from '../../../common/types';
+import { useFanController } from './useFanController';
 
 interface GraphBounds {
   minT: number;
@@ -8,7 +9,7 @@ interface GraphBounds {
   maxD: number;
 }
 
-interface GraphData extends GraphBounds {
+export interface GraphData extends GraphBounds {
   polyline: string;
   currentX: number;
   currentY: number;
@@ -52,22 +53,19 @@ function polylineFor(
     .join(' ');
 }
 
-export function useFanGraph(
-  points: Ref<CurvePoint[][]>,
-  fans: ComputedRef<FanStatus[]>,
-  tempC: ComputedRef<number>
-): ComputedRef<GraphData[]> {
+export function useFanGraph(fanIndex: number): ComputedRef<GraphData> {
+  const { points, fans, tempC } = useFanController();
+  
   return computed(() => {
-    return points.value.map((pts, i) => {
-      const bounds = getGraphBounds(pts, tempC.value);
-      const fanDuty = fans.value[i]?.dutyPct ?? 30;
+    const pts = points.value[fanIndex];
+    const bounds = getGraphBounds(pts, tempC.value);
+    const fanDuty = fans.value[fanIndex]?.dutyPct ?? 30;
 
-      return {
-        ...bounds,
-        polyline: polylineFor(pts, bounds.minT, bounds.maxT, bounds.minD, bounds.maxD),
-        currentX: tempToX(tempC.value, bounds.minT, bounds.maxT),
-        currentY: dutyToY(fanDuty, bounds.minD, bounds.maxD),
-      };
-    });
+    return {
+      ...bounds,
+      polyline: polylineFor(pts, bounds.minT, bounds.maxT, bounds.minD, bounds.maxD),
+      currentX: tempToX(tempC.value, bounds.minT, bounds.maxT),
+      currentY: dutyToY(fanDuty, bounds.minD, bounds.maxD),
+    };
   });
 }
