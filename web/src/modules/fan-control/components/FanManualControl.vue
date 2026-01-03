@@ -1,16 +1,16 @@
 <template>
   <div class="space-y-2">
     <label class="block text-xs text-text-secondary">
-      Скорость: {{ manualDuty[fanIndex] }}%
+      Скорость: {{ manualDuty[fanIndex] ?? 50 }}%
       <input
         type="range"
         min="30"
         max="100"
         step="1"
-        :value="manualDuty[fanIndex]"
+        :value="manualDuty[fanIndex] ?? 50"
         class="w-full mt-1 accent-accent-success"
         @input="onInput"
-        @change="setManualDuty(fanIndex, manualDuty[fanIndex])"
+        @change="setManualDuty(fanIndex, manualDuty[fanIndex] ?? 50)"
       />
     </label>
   </div>

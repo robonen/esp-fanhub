@@ -4,7 +4,7 @@
       ref="svgRef"
       viewBox="0 0 300 150" 
       preserveAspectRatio="none"
-      class="w-full aspect-[2/1]" 
+      class="w-full aspect-2/1" 
       aria-hidden="true"
       @click="handleClick"
       @pointermove="handlePointerMove"
@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, useTemplateRef } from 'vue';
 
 interface GraphData {
   minT: number;
@@ -67,7 +67,7 @@ const emit = defineEmits<{
   click: [temp: number, duty: number];
 }>();
 
-const svgRef = ref<SVGSVGElement | null>(null);
+const svgRef = useTemplateRef<SVGSVGElement>('svgRef');
 const isHovering = ref(false);
 const hoverX = ref(0);
 const hoverY = ref(0);

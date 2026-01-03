@@ -1,0 +1,7 @@
+{
+  "extends": "@robonen/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*", "src/**/*.vue"]
+}

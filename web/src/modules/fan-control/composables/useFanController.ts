@@ -19,7 +19,10 @@ function pointsEqual(a: CurvePoint[], b: CurvePoint[]): boolean {
   if (a.length !== b.length) return false;
   const sortedA = [...a].sort((x, y) => x.temp - y.temp);
   const sortedB = [...b].sort((x, y) => x.temp - y.temp);
-  return sortedA.every((p, i) => p.temp === sortedB[i].temp && p.duty === sortedB[i].duty);
+  return sortedA.every((p, i) => {
+    const bPoint = sortedB[i];
+    return bPoint && p.temp === bPoint.temp && p.duty === bPoint.duty;
+  });
 }
 
 export const useFanController = createGlobalState(() => {
@@ -38,7 +41,10 @@ export const useFanController = createGlobalState(() => {
   const fans = computed(() => statusData.value?.fans ?? DEFAULT_FANS);
 
   const hasUnsavedChanges = computed(() => {
-    return points.value.map((pts, i) => !pointsEqual(pts, savedPoints.value[i]));
+    return points.value.map((pts, i) => {
+      const saved = savedPoints.value[i];
+      return saved ? !pointsEqual(pts, saved) : false;
+    });
   });
 
   watch(statusData, (data) => {
@@ -70,31 +76,46 @@ export const useFanController = createGlobalState(() => {
   }
 
   async function savePoints(fanIndex: number): Promise<void> {
-    const csv = [...points.value[fanIndex]]
+    const fanPoints = points.value[fanIndex];
+    if (!fanPoints) return;
+    
+    const csv = [...fanPoints]
       .sort((a, b) => a.temp - b.temp)
       .map((p) => `${p.temp}:${p.duty}`)
       .join(',');
     isEditing.value = false;
     await apiPatch('/api/curvePoints', { id: fanIndex, points: csv });
-    savedPoints.value[fanIndex] = structuredClone(points.value[fanIndex]);
+    savedPoints.value[fanIndex] = structuredClone(fanPoints);
     await refreshStatus();
   }
 
   function addPoint(fanIndex: number, temp?: number, duty?: number): void {
-    points.value[fanIndex].push({
+    const fanPoints = points.value[fanIndex];
+    if (!fanPoints) return;
+    
+    fanPoints.push({
       temp: temp ?? Math.round(tempC.value),
       duty: duty ?? Math.round(fans.value[fanIndex]?.dutyPct ?? 60),
     });
   }
 
   function removePoint(fanIndex: number, pointIndex: number): void {
-    if (points.value[fanIndex].length > 1) {
-      points.value[fanIndex].splice(pointIndex, 1);
+    const fanPoints = points.value[fanIndex];
+    if (fanPoints && fanPoints.length > 1) {
+      fanPoints.splice(pointIndex, 1);
     }
   }
 
   function updatePoints(fanIndex: number, newPoints: CurvePoint[]): void {
     points.value[fanIndex] = newPoints;
+  }
+
+  function syncCurvesToCurrent(): void {
+    const currentPoints = points.value[activeFan.value];
+    if (!currentPoints) return;
+    
+    const cloned = structuredClone(currentPoints);
+    points.value = points.value.map(() => structuredClone(cloned)) as CurvePoint[][];
   }
 
   refreshPoints();
@@ -116,5 +137,6 @@ export const useFanController = createGlobalState(() => {
     addPoint,
     removePoint,
     updatePoints,
+    syncCurvesToCurrent,
   };
 });

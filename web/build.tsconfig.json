@@ -1,0 +1,9 @@
+{
+  "extends": "@robonen/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "NodeNext",
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts"]
+}

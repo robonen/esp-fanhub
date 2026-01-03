@@ -53,11 +53,12 @@ function polylineFor(
     .join(' ');
 }
 
-export function useFanGraph(fanIndex: number): ComputedRef<GraphData> {
+export function useFanGraph(fanIndexGetter: () => number): ComputedRef<GraphData> {
   const { points, fans, tempC } = useFanController();
   
   return computed(() => {
-    const pts = points.value[fanIndex];
+    const fanIndex = fanIndexGetter();
+    const pts = points.value[fanIndex] ?? [];
     const bounds = getGraphBounds(pts, tempC.value);
     const fanDuty = fans.value[fanIndex]?.dutyPct ?? 30;
 
