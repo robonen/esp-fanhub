@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-2">
-    <label class="block text-xs text-slate-400">
+    <label class="block text-xs text-text-secondary">
       Скорость: {{ modelValue }}%
       <input
         type="range"
@@ -8,7 +8,7 @@
         max="100"
         step="1"
         :value="modelValue"
-        class="w-full mt-1"
+        class="w-full mt-1 accent-accent-success"
         @input="onInput"
         @change="$emit('save')"
       />

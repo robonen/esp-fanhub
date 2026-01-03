@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-2">
-    <div class="text-xs text-slate-400 mb-2">Кривая (Темп → Скорость)</div>
+    <div class="text-xs text-text-secondary mb-2">Кривая (Темп → Скорость)</div>
 
     <!-- Graph -->
     <FanCurveGraph :data="graphData" />
@@ -10,24 +10,24 @@
       <div v-for="(pt, j) in points" :key="j" class="flex items-center gap-1">
         <input
           type="number"
-          class="w-14 px-1.5 py-0.5 rounded bg-slate-800 text-xs text-center"
+          class="w-14 px-2 py-1 rounded-md bg-surface-overlay text-xs text-center focus:outline focus:outline-border-default"
           :value="pt.temp"
           @input="onTempChange(j, $event)"
           @focus="$emit('edit-start')"
           @blur="$emit('edit-end')"
         />
-        <span class="text-xs text-slate-500">°→</span>
+        <span class="text-xs text-text-muted">°→</span>
         <input
           type="number"
-          class="w-14 px-1.5 py-0.5 rounded bg-slate-800 text-xs text-center"
+          class="w-14 px-2 py-1 rounded-md bg-surface-overlay text-xs text-center focus:outline focus:outline-border-default"
           :value="pt.duty"
           @input="onDutyChange(j, $event)"
           @focus="$emit('edit-start')"
           @blur="$emit('edit-end')"
         />
-        <span class="text-xs text-slate-500">%</span>
+        <span class="text-xs text-text-muted">%</span>
         <button
-          class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-red-900/50 text-xs text-slate-400 hover:text-red-400"
+          class="px-2 py-1 rounded-md bg-interactive-default text-xs text-text-secondary transition hover:bg-accent-danger/30 hover:text-accent-danger"
           @click="$emit('remove', j)"
         >
           ✕
@@ -38,13 +38,13 @@
     <!-- Actions -->
     <div class="flex gap-2 pt-2">
       <button
-        class="flex-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs"
+        class="flex-1 px-2 py-1 rounded-md bg-interactive-default text-xs transition hover:bg-interactive-hover"
         @click="$emit('add')"
       >
         + Точка
       </button>
       <button
-        class="flex-1 px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-xs"
+        class="flex-1 px-2 py-1 rounded-md bg-accent-success text-surface-base text-xs transition hover:brightness-110"
         @click="$emit('save')"
       >
         Сохранить

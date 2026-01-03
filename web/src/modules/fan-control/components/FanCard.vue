@@ -1,8 +1,8 @@
 <template>
-  <div class="p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+  <div class="p-4 rounded-xl border border-border-muted bg-surface-elevated/60">
     <div class="flex items-center justify-between mb-3">
       <h2 class="font-medium">Вентилятор {{ fanIndex + 1 }}</h2>
-      <span class="text-xs text-slate-400">{{ dutyPct.toFixed(0) }}%</span>
+      <span class="text-xs text-text-secondary">{{ dutyPct.toFixed(0) }}%</span>
     </div>
 
     <!-- Mode Toggle -->

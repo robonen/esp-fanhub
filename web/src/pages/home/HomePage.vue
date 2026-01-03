@@ -2,19 +2,22 @@
   <div class="min-h-screen p-4">
     <div class="max-w-3xl mx-auto">
       <!-- Header -->
-      <div class="mb-4 p-4 rounded-xl border border-slate-800 bg-slate-900/60">
-        <h1 class="text-xl font-semibold">ESP FanHub</h1>
-        <div class="flex items-center gap-4 mt-2">
+      <div class="p-4 rounded-xl border border-border-muted bg-surface-elevated/60 mb-4 space-y-2">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-xl font-semibold">ESP FanHub</h1>
+          <ThemeToggle />
+        </div>
+        <div class="flex items-center gap-4">
           <p class="text-sm">
-            <span class="text-slate-400">Wi-Fi:</span>
-            <span :class="wifi ? 'text-emerald-400' : 'text-red-400'" class="ml-1">
+            <span class="text-text-secondary">Wi-Fi:</span>
+            <span :class="wifi ? 'text-accent-success' : 'text-accent-danger'" class="ml-1">
               {{ wifi ? 'Подключено' : 'Подключение...' }}
             </span>
-            <span v-if="wifi && ip" class="text-slate-500 ml-1">({{ ip }})</span>
+            <span v-if="wifi && ip" class="text-text-muted ml-1">({{ ip }})</span>
           </p>
           <p class="text-sm">
-            <span class="text-slate-400">Температура:</span>
-            <span class="font-mono text-amber-400 ml-1">{{ tempC.toFixed(1) }}°C</span>
+            <span class="text-text-secondary">Температура:</span>
+            <span class="font-mono text-accent-warning ml-1">{{ tempC.toFixed(1) }}°C</span>
           </p>
         </div>
       </div>
@@ -47,6 +50,7 @@
 
 <script setup lang="ts">
 import { FanCard, useFanController, useFanGraph } from '../../modules/fan-control';
+import ThemeToggle from '../../modules/ui/components/ThemeToggle.vue';
 
 const {
   wifi,
